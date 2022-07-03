@@ -1,13 +1,18 @@
 import { serve } from "https://deno.land/std@0.146.0/http/server.ts";
 import {
   Database,
-  SQLite3Connector,
+  PostgresConnector,
   Model,
   DataTypes,
 } from "https://deno.land/x/denodb/mod.ts";
+import "https://deno.land/x/dotenv/load.ts";
 
-const connector = new SQLite3Connector({
-  filepath: "./database.sqlite",
+const connector = new PostgresConnector({
+  host: Deno.env.get("DATABASE_HOST")!,
+  database: Deno.env.get("DATABASE_NAME")!,
+  port: +Deno.env.get("DATABASE_PORT")!,
+  username: Deno.env.get("DATABASE_USERNAME")!,
+  password: Deno.env.get("DATABASE_PASSWORD")!,
 });
 
 const db = new Database(connector);
@@ -18,7 +23,8 @@ class Business extends Model {
 
   static fields = {
     id: {
-      type: DataTypes.INTEGER,
+      unique: true,
+      autoIncrement: true,
       primaryKey: true,
     },
     name: {
@@ -30,7 +36,7 @@ class Business extends Model {
 
 db.link([Business]);
 
-await db.sync({ drop: true });
+await db.sync();
 
 await Business.create({
   name: "FooBar",
